@@ -5,9 +5,6 @@ var express = require('express');
 var app = express();
 
 app.set('port', process.env.PORT || 8080);
-//app.use(express.static(path.join(__dirname, 'public')));
-//app.use(express.favicon(path.join(__dirname, 'public/img/favicon.ico')));
-
 
 var sendFile = function (file, response) {
 
@@ -35,12 +32,6 @@ app.get('/index.html', function (request, response) {
 
 });
 
-app.get('/_1laqwVZVhl9DJuX2YfxOF3vW.r1dsY5jcHiG2beNQ--.html',
-	function (request, response) {
-
-    sendFile('./index.html', response);
-
-});
 
 
 http.createServer(app).listen(app.get('port'), function () {
