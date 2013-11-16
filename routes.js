@@ -177,7 +177,7 @@ var requestYahooAuth = function (req, res) {
 		queryString.oauth_signature_method = 'HMAC-SHA1';
 		queryString.oauth_version = '1.0';
 		queryString.oauth_callback =
-		    'http://teleporterlabs.cloudapp.net/oauth_callback' ;
+		    process.env.APP_URI + '/oauth_callback';
 
 		var options = {
 		    uri: uri,
