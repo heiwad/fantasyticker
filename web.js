@@ -1,38 +1,20 @@
-var fs = require('fs');
-var http = require('http');
-var express = require('express');
+var express = require('express')
+  , http = require('http')
+  , path = require('path')
+  , ROUTES = require('./routes');
 
 var app = express();
-
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
 app.set('port', process.env.PORT || 8080);
-
-var sendFile = function (file, response) {
-
-    fs.readFile(file, function (err, result) {
-
-	if (err) {
-	    response.send('Could not retrieve requested resource', 404);
-	} else {
-	    response.send(result.toString());
-	}
-    });
-
-};
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.favicon(path.join(__dirname, 'public/img/favicon.ico')));
+app.use(express.logger("dev"));
 
 
-app.get('/', function (request, response) {
-
-    sendFile('./index.html', response);
-
-});
-
-app.get('/index.html', function (request, response) {
-
-    sendFile('./index.html', response);
-
-});
-
-
+for (var ii in ROUTES) {
+    app.get(ROUTES[ii].path, ROUTES[ii].fn);
+}
 
 http.createServer(app).listen(app.get('port'), function () {
     console.log("Listening on " + app.get('port'));
