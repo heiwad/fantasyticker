@@ -76,8 +76,6 @@ var yahooHandler = function (req, res) {
     exchangeRequestTokenForAccessToken(req.query.oauth_token, req.query.oauth_verifier);
     res.send("Welcome to the fantasy ticker!", 200);
 
-
-
 };
 
 
