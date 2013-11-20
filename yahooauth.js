@@ -49,6 +49,7 @@ function YahooAuth () {
 
 YahooAuth.prototype.init = function (init_complete) {
 
+    var _this = this; // save reference to this object
 
     //Load config from environment
 
@@ -110,10 +111,10 @@ YahooAuth.prototype.init = function (init_complete) {
 		var queryString = {};
 
 		queryString.oauth_timestamp = Date.now() / 1000;
-		queryString.oauth_consumer_key = this.oauth_consumer_key; //WATCHOUT FOR THIS!!
-		queryString.oauth_signature_method = this.CONFIG.OAUTH_SIGNATURE_METHOD;
-		queryString.oauth_version = this.CONFIG.OAUTH_VERSION;
-		queryString.oauth_callback = this.oauth_callback;
+		queryString.oauth_consumer_key = _this.oauth_consumer_key; //WATCHOUT FOR THIS!!
+		queryString.oauth_signature_method = _this.CONFIG.OAUTH_SIGNATURE_METHOD;
+		queryString.oauth_version = _this.CONFIG.OAUTH_VERSION;
+		queryString.oauth_callback = _this.oauth_callback;
 
 		var options = {
 		    uri: uri,
@@ -137,7 +138,7 @@ YahooAuth.prototype.init = function (init_complete) {
 
 	if (err){
 	    console.log('Error requesting auth: ' + err);
-	    init_complete.send(err, this); // done callback passed into parent init method
+	    init_complete.send(err, _this); // done callback passed into parent init method
 	}
 	else {
 
@@ -152,12 +153,12 @@ YahooAuth.prototype.init = function (init_complete) {
 	    //if authinfo.oauth_callback_confirmed not true, there may be a problem. check this.
 
 	    //Saving YAHOO Credential response
-	    this.server_token.oauth_token = authinfo.oauth_token;
-	    this.server_token.oauth_token_secret = authinfo.oauth_token_secret;
-	    this.server_token.oauth_expires_in = authinfo.oauth_expires_in;
-	    this.xoauth_request_auth_url = authinfo.xoauth_request_auth_url;
+	    _this.server_token.oauth_token = authinfo.oauth_token;
+	    _this.server_token.oauth_token_secret = authinfo.oauth_token_secret;
+	    _this.server_token.oauth_expires_in = authinfo.oauth_expires_in;
+	    _this.xoauth_request_auth_url = authinfo.xoauth_request_auth_url;
 
-	    init_complete(null, this); //Done callback passed into parent Init method
+	    init_complete(null, _this); //Done callback passed into parent Init method
 
 	}
     };
