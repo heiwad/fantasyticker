@@ -114,7 +114,7 @@ YahooAuth.prototype.init = function (init_complete) {
 		queryString.oauth_consumer_key = _this.oauth_consumer_key; //WATCHOUT FOR THIS!!
 		queryString.oauth_signature_method = _this.CONFIG.OAUTH_SIGNATURE_METHOD;
 		queryString.oauth_version = _this.CONFIG.OAUTH_VERSION;
-		queryString.oauth_callback = _this.oauth_callback;
+		queryString.oauth_callback = _this.oauth_callback_uri;
 
 		var options = {
 		    uri: uri,
@@ -138,19 +138,16 @@ YahooAuth.prototype.init = function (init_complete) {
 
 	if (err){
 	    console.log('Error requesting auth: ' + err);
-	    init_complete.send(err, _this); // done callback passed into parent init method
+	    init_complete(err, _this); // done callback passed into parent init method
 	}
 	else {
 
 	    var authinfo = qs.parse(body);
 	    var outstring = 'Received auth response from Yahoo: ' + response.statusCode;
 
-	    for (var field in authinfo) {
-		outstring += '\n   ' + field + ': ' + authinfo[field];
-	    }
 
 	    console.log(outstring);
-	    //if authinfo.oauth_callback_confirmed not true, there may be a problem. check this.
+	    //if authinfo.oauth_callback_confirmed not true, there may be a problem. check this
 
 	    //Saving YAHOO Credential response
 	    _this.server_token.oauth_token = authinfo.oauth_token;
@@ -165,10 +162,8 @@ YahooAuth.prototype.init = function (init_complete) {
 
     var requestToken = function (err, options) {
 
-	console.log('Submitting auth request. Query options are:');
-	for (var option in options.qs) {
-	    console.log('   ' + option + ': ' + options.qs[option]);
-	    }
+	console.log('Submitting request for server auth token');
+
 	    request(options, authRequestHandler);
     };
 
