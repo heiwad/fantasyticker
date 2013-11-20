@@ -1,4 +1,4 @@
-var request = require('requppppppest');
+var request = require('request');
 var qs = require('querystring');
 var url = require('url');
 var fs = require('fs');
