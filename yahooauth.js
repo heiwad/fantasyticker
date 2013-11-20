@@ -8,6 +8,9 @@ var crypto = require('crypto');
 
 
 //For future scalability, these keys should be migrated to storage (ie REDIS/MONGO)
+//TODO: consider making this code self-init so that it can handle loading from REDIS
+// in the future rather than scattering this out to the routehandler.
+
 
 function YahooAuth () {
 
@@ -49,7 +52,7 @@ function YahooAuth () {
 
 YahooAuth.prototype.init = function (init_complete) {
 
-    var _this = this; // save reference to this object
+    var _this = this; // save reference to this object for use in callbacks
 
     //Load config from environment
 
@@ -59,80 +62,8 @@ YahooAuth.prototype.init = function (init_complete) {
     this.oauth_consumer_key = process.env.YAHOO_KEY;
     this.oauth_callback_uri = process.env.APP_URI + OAUTH_CALLBACK_ROUTE;
 
-    var REQUEST_TOKEN_KEY = this.oauth_consumer_secret + '&';
     var uri = this.yahoo_auth_uris.get_request_token;
 
-
-    //Set up the functions needed request the creds from yahoo
-
-    //TODO: Refactor this to be simpler and just use request library for signing.
-    var signAuthReq = function (method, key, options, done) {
-
-	if (options.qs.oauth_signature_method === 'plaintext') {
-	    options.qs.oauth_signature = key;
-	    done(null, options);
-	    return;
-	} else {
-
-	    var paramList = [];
-	    for (var option in options.qs) {
-
-		var entry = encodeURIComponent(option) +
-		    '=' + encodeURIComponent(options.qs[option]);
-
-		paramList.push(entry);
-	    }
-
-	    paramList = paramList.sort();
-	    var paramString = paramList.join('&');
-
-	    var signatureBase = method.toUpperCase();
-	    signatureBase += '&' + encodeURIComponent(options.uri);
-	    signatureBase += '&' + encodeURIComponent(paramString);
-
-	    var hmac = crypto.createHmac('sha1', key);
-	    hmac.setEncoding('base64');
-	    hmac.write(signatureBase);
-	    hmac.end();
-
-	    var digest = hmac.read();
-	    options.qs.oauth_signature = digest;
-	    return options;
-	}
-
-    };
-
-    var wrapSignMethod = function (method, key, uri, done) {
-
-	var setOptions = function (err, res) {
-	    if (err){
-		done(err);
-	    } else {
-		var queryString = {};
-
-		queryString.oauth_timestamp = Date.now() / 1000;
-		queryString.oauth_consumer_key = _this.oauth_consumer_key; //WATCHOUT FOR THIS!!
-		queryString.oauth_signature_method = _this.CONFIG.OAUTH_SIGNATURE_METHOD;
-		queryString.oauth_version = _this.CONFIG.OAUTH_VERSION;
-		queryString.oauth_callback = _this.oauth_callback_uri;
-
-		var options = {
-		    uri: uri,
-		    qs: queryString,
-		    headers: {},
-		    method: method
-		};
-
-		options.qs.oauth_nonce = res.toString('hex');
-
-		var signedOptions =  signAuthReq(method, key, options);
-
-		done(null, signedOptions);
-	    }
-	};
-
-	return setOptions; //Returning a function here!
-    };
 
     var authRequestHandler = function (err, response, body) {
 
@@ -146,7 +77,14 @@ YahooAuth.prototype.init = function (init_complete) {
 	    var outstring = 'Received auth response from Yahoo: ' + response.statusCode;
 
 
+
 	    console.log(outstring);
+
+	    if(response.statusCode != 200) {
+
+		console.log('Error authenticating. Full response');
+		for (var key in authinfo) console.log('   ' + key + ': ' + authinfo[key]);
+	    } else {
 	    //if authinfo.oauth_callback_confirmed not true, there may be a problem. check this
 
 	    //Saving YAHOO Credential response
@@ -156,23 +94,22 @@ YahooAuth.prototype.init = function (init_complete) {
 	    _this.xoauth_request_auth_url = authinfo.xoauth_request_auth_url;
 
 	    init_complete(null, _this); //Done callback passed into parent Init method
-
+	    }
 	}
     };
 
-    var requestToken = function (err, options) {
 
-	console.log('Submitting request for server auth token');
-
-	    request(options, authRequestHandler);
+    var query_auth = {
+	consumer_key: this.oauth_consumer_key,
+	consumer_secret: this.oauth_consumer_secret,
+	callback: this.oauth_callback_uri
     };
 
-    var getOptions = wrapSignMethod("GET", REQUEST_TOKEN_KEY, uri, requestToken);
-
-    //Initiate by getting nonce and starting chain of event handlers
-    crypto.randomBytes(16, getOptions);
+    request({uri:uri, oauth:query_auth}, authRequestHandler);
 
 };
+
+
 
 YahooAuth.prototype.setRefresh = function (interval) {
 
